@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Databricks Data Engineer Prep Pro</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dbx: {
+                            bg: '#121921',
+                            card: '#1B252C',
+                            border: '#2A363F',
+                            orange: '#FF3621',
+                            orangeHover: '#E22813',
+                            orangeLight: 'rgba(255, 54, 33, 0.15)',
+                            text: '#E2E8F0',
+                            muted: '#94A3B8'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter & JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1318;
+            color: #E2E8F0;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        code, pre {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #121921;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2A363F;
+            border-radius: 9999px;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn {
+            animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+<body class="bg-[#0d1318] text-slate-100 flex justify-center min-h-screen selection:bg-dbx-orange selection:text-white">
+
+    <div id="app-container" class="w-full max-w-md bg-dbx-bg min-h-screen flex flex-col relative shadow-2xl border-x border-dbx-border/60 overflow-hidden">
+        
+        <header class="sticky top-0 z-40 bg-dbx-bg/95 backdrop-blur-md border-b border-dbx-border px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-dbx-orange to-red-600 flex items-center justify-center shadow-md shadow-dbx-orange/20">
+                    <i class="fa-solid fa-cubes text-white text-sm"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-sm tracking-tight text-white leading-none">Databricks DE Prep</h1>
+                    <p class="text-[10px] text-dbx-muted font-medium mt-0.5">Interview & Study Companion</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="app.openModal('installAppModal')" class="p-2 text-xs bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 rounded-lg hover:bg-emerald-500 hover:text-white transition font-medium flex items-center space-x-1" title="Install App">
+                    <i class="fa-solid fa-download text-xs"></i>
+                    <span class="hidden sm:inline">Install</span>
+                </button>
+                <button onclick="app.openModal('addContentModal')" class="p-2 text-xs bg-dbx-orangeLight text-dbx-orange border border-dbx-orange/30 rounded-lg hover:bg-dbx-orange hover:text-white transition font-medium flex items-center space-x-1" title="Add Custom Item">
+                    <i class="fa-solid fa-plus text-xs"></i>
+                    <span class="hidden sm:inline">Add</span>
+                </button>
+                <button onclick="app.resetData()" class="p-2 text-dbx-muted hover:text-white transition text-xs bg-dbx-card border border-dbx-border rounded-lg" title="Reset Data">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </div>
+        </header>
+
+        <main id="main-content" class="flex-1 overflow-y-auto pb-24 px-4 pt-4">
+            <!-- Dynamic view injected here -->
+        </main>
+
+        <div id="toast" class="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-slate-900/95 text-white px-4 py-2.5 rounded-xl text-xs font-medium border border-dbx-border shadow-2xl opacity-0 transition-opacity duration-300 pointer-events-none z-50 flex items-center space-x-2">
+            <i class="fa-solid fa-circle-check text-dbx-orange"></i>
+            <span id="toast-msg">Copied to clipboard!</span>
+        </div>
+
+        <!-- Install Mobile App Modal -->
+        <div id="installAppModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 opacity-0 pointer-events-none transition-opacity duration-200">
+            <div class="bg-dbx-card border border-dbx-border w-full max-w-md rounded-t-2xl sm:rounded-2xl p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+                <div class="flex items-center justify-between border-b border-dbx-border pb-3">
+                    <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+                        <i class="fa-solid fa-mobile-screen-button text-emerald-400"></i>
+                        <span>Install on Android & iPhone</span>
+                    </h3>
+                    <button onclick="app.closeModal('installAppModal')" class="text-dbx-muted hover:text-white p-1">
+                        <i class="fa-solid fa-xmark text-base"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-4 text-xs">
+                    <p class="text-slate-300 leading-relaxed">
+                        You can install this app directly on any Android phone or iPhone **without needing the Google Play Store or Apple App Store**!
+                    </p>
+
+                    <!-- Android Instructions -->
+                    <div class="bg-dbx-bg border border-dbx-border p-3.5 rounded-xl space-y-2">
+                        <div class="flex items-center space-x-2 text-emerald-400 font-bold text-xs">
+                            <i class="fa-brands fa-android text-base"></i>
+                            <span>Android Devices (Chrome / Edge)</span>
+                        </div>
+                        <ol class="list-decimal list-inside text-slate-300 space-y-1.5 pl-1 text-[11px] leading-relaxed">
+                            <li>Open this website link in **Google Chrome**.</li>
+                            <li>Tap the **3 dots menu** (<i class="fa-solid fa-ellipsis-vertical mx-0.5 text-dbx-muted"></i>) in the top right corner.</li>
+                            <li>Tap **"Add to Home Screen"** or **"Install app"**.</li>
+                            <li>Confirm when prompted. An app icon will be added to your device apps list!</li>
+                        </ol>
+                    </div>
+
+                    <!-- iOS Instructions -->
+                    <div class="bg-dbx-bg border border-dbx-border p-3.5 rounded-xl space-y-2">
+                        <div class="flex items-center space-x-2 text-amber-400 font-bold text-xs">
+                            <i class="fa-brands fa-apple text-base"></i>
+                            <span>iPhone / iPad (Safari)</span>
+                        </div>
+                        <ol class="list-decimal list-inside text-slate-300 space-y-1.5 pl-1 text-[11px] leading-relaxed">
+                            <li>Open this website link in **Safari**.</li>
+                            <li>Tap the **Share button** (<i class="fa-solid fa-share-nodes mx-0.5 text-dbx-muted"></i>) at the bottom toolbar.</li>
+                            <li>Scroll down and tap **"Add to Home Screen"**.</li>
+                            <li>Tap **Add** in the top right.</li>
+                        </ol>
+                    </div>
+
+                    <!-- Host / Share Instructions -->
+                    <div class="bg-dbx-orangeLight border border-dbx-orange/30 p-3 rounded-xl space-y-1">
+                        <span class="text-[10px] font-bold text-dbx-orange uppercase tracking-wider block">Sharing with others:</span>
+                        <p class="text-[11px] text-slate-200">
+                            Host this HTML file on free hosting services like **GitHub Pages**, **Netlify**, **Vercel**, or **Render**, then share the website URL with your friends or colleagues!
+                        </p>
+                    </div>
+                </div>
+
+                <button onclick="app.closeModal('installAppModal')" class="w-full bg-dbx-card hover:bg-dbx-border text-white text-xs font-bold py-2.5 rounded-xl transition border border-dbx-border mt-2">
+                    Got It!
+                </button>
+            </div>
+        </div>
+
+        <div id="addContentModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 opacity-0 pointer-events-none transition-opacity duration-200">
+            <div class="bg-dbx-card border border-dbx-border w-full max-w-md rounded-t-2xl sm:rounded-2xl p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+                <div class="flex items-center justify-between border-b border-dbx-border pb-3">
+                    <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+                        <i class="fa-solid fa-plus-circle text-dbx-orange"></i>
+                        <span>Add Custom Prep Item</span>
+                    </h3>
+                    <button onclick="app.closeModal('addContentModal')" class="text-dbx-muted hover:text-white p-1">
+                        <i class="fa-solid fa-xmark text-base"></i>
+                    </button>
+                </div>
+
+                <form id="addContentForm" onsubmit="app.handleAddContent(event)" class="space-y-3">
+                    <div>
+                        <label class="block text-[11px] font-medium text-dbx-muted mb-1">Type</label>
+                        <select id="newType" class="w-full bg-dbx-bg border border-dbx-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-dbx-orange">
+                            <option value="question">Interview Question & Answer</option>
+                            <option value="note">Study Note / Code Snippet</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-medium text-dbx-muted mb-1">Category / Topic</label>
+                        <select id="newCategory" class="w-full bg-dbx-bg border border-dbx-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-dbx-orange">
+                            <option value="Delta Lake">Delta Lake & DLT</option>
+                            <option value="PySpark">PySpark & Spark SQL</option>
+                            <option value="Unity Catalog">Unity Catalog & Governance</option>
+                            <option value="Optimization">Performance Optimization</option>
+                            <option value="Streaming">Structured Streaming</option>
+                            <option value="Medallion">Medallion Architecture</option>
+                        </select>
+                    </div>
+
+                    <div id="diffContainer">
+                        <label class="block text-[11px] font-medium text-dbx-muted mb-1">Difficulty</label>
+                        <select id="newDifficulty" class="w-full bg-dbx-bg border border-dbx-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-dbx-orange">
+                            <option value="Easy">Easy</option>
+                            <option value="Medium" selected>Medium</option>
+                            <option value="Hard">Hard</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label id="titleLabel" class="block text-[11px] font-medium text-dbx-muted mb-1">Question / Title</label>
+                        <input type="text" id="newTitle" required placeholder="e.g. What is Delta Z-Ordering?" class="w-full bg-dbx-bg border border-dbx-border rounded-xl px-3 py-2 text-xs text-white placeholder-dbx-muted/60 focus:outline-none focus:border-dbx-orange">
+                    </div>
+
+                    <div>
+                        <label id="bodyLabel" class="block text-[11px] font-medium text-dbx-muted mb-1">Detailed Explanation / Answer</label>
+                        <textarea id="newBody" rows="3" required placeholder="Explain the key concepts, trade-offs, and internals..." class="w-full bg-dbx-bg border border-dbx-border rounded-xl px-3 py-2 text-xs text-white placeholder-dbx-muted/60 focus:outline-none focus:border-dbx-orange"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-medium text-dbx-muted mb-1">Code Snippet (Optional)</label>
+                        <textarea id="newCode" rows="2" placeholder="OPTIMIZE delta_table ZORDER BY (date, user_id);" class="w-full bg-dbx-bg border border-dbx-border rounded-xl px-3 py-2 text-xs font-mono text-amber-300 placeholder-dbx-muted/40 focus:outline-none focus:border-dbx-orange"></textarea>
+                    </div>
+
+                    <button type="submit" class="w-full bg-dbx-orange hover:bg-dbx-orangeHover text-white text-xs font-bold py-2.5 rounded-xl transition shadow-lg shadow-dbx-orange/20 mt-2">
+                        Save Item
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const DEFAULT_QUESTIONS = [
+            {
+                id: 'q1',
+                category: 'Delta Lake',
+                difficulty: 'Hard',
+                question: 'How does Delta Lake guarantee ACID transactions and handle concurrent writes?',
+                answer: 'Delta Lake uses an append-only JSON transaction log (`_delta_log`) together with Optimistic Concurrency Control (OCC). Every state change commits a new JSON file (e.g., 000001.json). When multiple concurrent writers attempt changes, Databricks checks if files modified by transaction A overlap with files read/updated by transaction B. If no conflict exists, write succeeds; otherwise, a ConcurrentAppendException is thrown and the failing transaction automatically retries.',
+                codeSnippet: '-- Optimize layout & perform Z-Ordering for concurrency/read pruning\nOPTIMIZE delta.`/mnt/lake/orders` \nZORDER BY (customer_id, order_date);',
+                keyTakeaways: ['JSON transaction log tracks metadata', 'OCC handles concurrency without lock overhead', 'Z-Ordering co-locates related data']
+            },
+            {
+                id: 'q2',
+                category: 'PySpark',
+                difficulty: 'Medium',
+                question: 'What is the key difference between narrow and wide transformations in PySpark?',
+                answer: 'In narrow transformations (e.g., map, filter, select, union), each partition in the parent RDD/DataFrame contributes to at most one partition in the child RDD without network data shuffling. In wide transformations (e.g., groupBy, join, repartition, reduceByKey), data from multiple parent partitions must be shuffled across cluster nodes to create child partitions.',
+                codeSnippet: '# Narrow Transformation (No Shuffle)\nfiltered_df = df.filter(df["amount"] > 100)\n\n# Wide Transformation (Triggers Shuffle)\nsummary_df = df.groupBy("category").sum("amount")',
+                keyTakeaways: ['Narrow = no network shuffle (fast)', 'Wide = triggers shuffle exchange (expensive)', 'Shuffles are primary bottlenecks in PySpark']
+            },
+            {
+                id: 'q3',
+                category: 'Unity Catalog',
+                difficulty: 'Medium',
+                question: 'Explain Unity Catalog\'s 3-level namespace and row/column security model.',
+                answer: 'Unity Catalog uses `catalog.schema.table_or_view` to centralize governance across workspaces. It enforces ANSI SQL privilege grants (`GRANT SELECT ON...`) and natively supports Row-Level Filtering (hiding specific rows based on user group/role) and Column-Level Masking (redacting sensitive fields like PII or SSN at query time).',
+                codeSnippet: '-- Set up Row Filter Function\nCREATE FUNCTION catalog.sec.region_filter(region STRING)\nRETURN IS_MEMBER(\'admin\') OR region = current_user();\n\nALTER TABLE catalog.sales.orders \nSET ROW FILTER catalog.sec.region_filter ON (region_col);',
+                keyTakeaways: ['Namespace: catalog.schema.table', 'Unified governance across multiple workspaces', 'Dynamic row filtering & column masking']
+            },
+            {
+                id: 'q4',
+                category: 'Optimization',
+                difficulty: 'Hard',
+                question: 'How does Adaptive Query Execution (AQE) dynamically optimize Spark plans?',
+                answer: 'AQE evaluates intermediate shuffle metrics during query execution to re-optimize the physical plan dynamically. Key optimizations include: 1) Dynamically coalescing small shuffle partitions to avoid driver overhead, 2) Converting Sort-Merge Joins into Broadcast Hash Joins if runtime size falls below threshold, and 3) Dynamically handling data skew by splitting skewed partitions.',
+                codeSnippet: 'spark.conf.set("spark.sql.adaptive.enabled", "true")\nspark.conf.set("spark.sql.adaptive.coalescePartitions.enabled", "true")\nspark.conf.set("spark.sql.adaptive.skewJoin.enabled", "true")',
+                keyTakeaways: ['Operates at runtime during shuffle stage boundaries', 'Fixes under-partitioning and skew automatically', 'Auto-converts to Broadcast Join when feasible']
+            },
+            {
+                id: 'q5',
+                category: 'Medallion',
+                difficulty: 'Easy',
+                question: 'What are the distinct responsibilities of Bronze, Silver, and Gold layers in Medallion Architecture?',
+                answer: 'Bronze (Raw): Ingests append-only raw data from source systems (Kafka, S3, APIs) retaining original schema and historical lineage. Silver (Cleansed/Enriched): Deduplicates, validates schema, standardizes, and joins raw data into structured tables. Gold (Curated Business Metrics): Aggregates Silver data into star-schema dimension/fact tables optimized for BI, reporting, and ML models.',
+                codeSnippet: '# Typical Medallion Pipeline flow\n# Raw Source -> Bronze Table (Append-Only)\n# Bronze -> Silver Table (Cleaner & Upserted)\n# Silver -> Gold Table (Aggregated Star Schema)',
+                keyTakeaways: ['Bronze = Raw append-only store', 'Silver = Cleansed & standardized data', 'Gold = Business-level aggregated metrics']
+            },
+            {
+                id: 'q6',
+                category: 'Streaming',
+                difficulty: 'Hard',
+                question: 'How do Watermarks and Checkpointing work in Structured Streaming?',
+                answer: 'Watermarking (`withWatermark`) specifies how late arriving data can be before it is ignored, enabling stateful engine operations (like windowed aggregations) to clean up state store memory. Checkpointing writes read offsets and state metadata to persistent cloud storage (S3/ADLS), enabling exact-once fault recovery upon driver or cluster failure.',
+                codeSnippet: 'streaming_df = spark.readStream.format("delta").load("/mnt/bronze") \\\n  .withWatermark("event_time", "10 minutes") \\\n  .groupBy(window("event_time", "5 minutes"), "device_id").count() \\\n  .writeStream.option("checkpointLocation", "/mnt/checkpoints/dev").start()',
+                keyTakeaways: ['Watermark bounds late data state retention', 'Checkpoint ensures exact-once fault tolerance', 'Prevents memory leaks in streaming state']
+            },
+            {
+                id: 'q7',
+                category: 'Delta Lake',
+                difficulty: 'Easy',
+                question: 'What is the difference between Delta Lake OPTIMIZE and VACUUM commands?',
+                answer: 'OPTIMIZE solves the small file problem by compacting small files into optimal target sizes (~1 GB). VACUUM cleans up physically unreferenced data files older than a specified retention threshold (default 7 days) from storage. Running VACUUM prevents storage costs from inflating due to time travel history.',
+                codeSnippet: '-- Compact small files first\nOPTIMIZE delta.`/mnt/gold/analytics`;\n\n-- Remove old unreferenced files (default retention 7 days)\nVACUUM delta.`/mnt/gold/analytics` RETAIN 168 HOURS;',
+                keyTakeaways: ['OPTIMIZE compacts files for faster scans', 'VACUUM deletes obsolete raw storage files', 'VACUUM breaks Time Travel prior to target timestamp']
+            },
+            {
+                id: 'q8',
+                category: 'PySpark',
+                difficulty: 'Hard',
+                question: 'What causes Spark Out-Of-Memory (OOM) errors and how do you resolve them?',
+                answer: 'Driver OOM is caused by `.collect()`, large broadcasts, or high driver garbage collection. Executor OOM is caused by memory skew, high join expansion, or insufficient executor memory allocation. Resolutions: 1) Avoid `.collect()` on large datasets, 2) Repartition/salting to handle key skew, 3) Tune `spark.executor.memory` and `spark.memory.fraction`.',
+                codeSnippet: '# Handle skew with Salting\nimport pyspark.sql.functions as F\n\n# Add random salt key to prevent concentrated join skew\nsalted_df = df.withColumn("salt", (F.rand() * 10).cast("int"))',
+                keyTakeaways: ['Driver OOM: collect(), huge broadcasts', 'Executor OOM: Data skew, unoptimized joins', 'Fixes: Salting, repartitioning, AQE skew join']
+            }
+        ];
+
+        const DEFAULT_NOTES = [
+            {
+                id: 'n1',
+                category: 'Delta Lake',
+                title: 'Delta Time Travel & Rollback Cheat Sheet',
+                summary: 'Query older versions or restore tables directly after accidental deletes or corrupt writes.',
+                codeSnippet: '-- Query by specific commit version\nSELECT * FROM sales_delta VERSION AS OF 12;\n\n-- Query by timestamp\nSELECT * FROM sales_delta TIMESTAMP AS OF \'2026-10-01 00:00:00\';\n\n-- Emergency Rollback\nRESTORE TABLE sales_delta TO VERSION AS OF 11;'
+            },
+            {
+                id: 'n2',
+                category: 'PySpark',
+                title: 'Broadcast Join & Cache Pattern',
+                summary: 'Explicitly broadcast dimension tables (< 100MB) to eliminate shuffle overhead.',
+                codeSnippet: 'from pyspark.sql.functions import broadcast\n\n# Broadcast small lookup table\nresult_df = fact_df.join(broadcast(dim_df), "store_id")\n\n# Cache intermediate DF if reused multiple times\nresult_df.cache()\nresult_df.count() # Trigger action to materialize cache'
+            },
+            {
+                id: 'n3',
+                category: 'Optimization',
+                title: 'Liquid Clustering vs Partitioning & Z-Order',
+                summary: 'Databricks Liquid Clustering replaces fixed partitioning and Z-Ordering with dynamic, incremental data layout optimization.',
+                codeSnippet: '-- Create table with Liquid Clustering\nCREATE TABLE events (id BIGINT, date DATE, region STRING)\nCLUSTER BY (date, region);\n\n-- Trigger cluster maintenance incrementally\nOPTIMIZE events;'
+            },
+            {
+                id: 'n4',
+                category: 'Unity Catalog',
+                title: 'Managed vs External Table Creation Syntax',
+                summary: 'Managed tables are cleaned up automatically when dropped; External tables keep raw underlying cloud storage paths.',
+                codeSnippet: '-- Managed Table (UC controls storage lifecycle)\nCREATE TABLE prod.gold.daily_sales (date DATE, rev DOUBLE);\n\n-- External Table (Requires Storage Location)\nCREATE TABLE prod.gold.ext_sales (date DATE, rev DOUBLE)\nLOCATION \'s3://my-company-bucket/external/sales\';'
+            }
+        ];
+
+        class DatabricksPrepApp {
+            constructor() {
+                this.currentTab = 'questions';
+                this.selectedCategory = 'All';
+                this.selectedDifficulty = 'All';
+                this.searchQuery = '';
+                this.expandedQuestions = new Set();
+                
+                // Persistent State
+                this.questions = JSON.parse(localStorage.getItem('dbx_questions')) || DEFAULT_QUESTIONS;
+                this.notes = JSON.parse(localStorage.getItem('dbx_notes')) || DEFAULT_NOTES;
+                this.bookmarks = JSON.parse(localStorage.getItem('dbx_bookmarks')) || [];
+                this.mastered = JSON.parse(localStorage.getItem('dbx_mastered')) || [];
+
+                // Quiz State
+                this.quizQuestions = [];
+                this.quizIndex = 0;
+                this.quizScore = 0;
+                this.quizAnswers = [];
+                this.quizActive = false;
+                this.quizTimer = null;
+                this.quizTimeLeft = 60;
+
+                this.categories = ['All', 'Delta Lake', 'PySpark', 'Unity Catalog', 'Optimization', 'Streaming', 'Medallion'];
+                
+                this.init();
+            }
+
+            init() {
+                this.render();
+            }
+
+            saveState() {
+                localStorage.setItem('dbx_questions', JSON.stringify(this.questions));
+                localStorage.setItem('dbx_notes', JSON.stringify(this.notes));
+                localStorage.setItem('dbx_bookmarks', JSON.stringify(this.bookmarks));
+                localStorage.setItem('dbx_mastered', JSON.stringify(this.mastered));
+            }
+
+            switchTab(tab) {
+                this.currentTab = tab;
+                this.render();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            setCategory(cat) {
+                this.selectedCategory = cat;
+                this.render();
+            }
+
+            setDifficulty(diff) {
+                this.selectedDifficulty = diff;
+                this.render();
+            }
+
+            handleSearch(event) {
+                this.searchQuery = event.target.value.toLowerCase();
+                this.renderContentList();
+            }
+
+            toggleBookmark(id) {
+                if (this.bookmarks.includes(id)) {
+                    this.bookmarks = this.bookmarks.filter(b => b !== id);
+                    this.showToast('Item removed from saved');
+                } else {
+                    this.bookmarks.push(id);
+                    this.showToast('Saved to bookmarks!');
+                }
+                this.saveState();
+                this.render();
+            }
+
+            toggleMastered(id) {
+                if (this.mastered.includes(id)) {
+                    this.mastered = this.mastered.filter(m => m !== id);
+                    this.showToast('Marked as needs review');
+                } else {
+                    this.mastered.push(id);
+                    this.showToast('Marked as mastered! 🎉');
+                }
+                this.saveState();
+                this.render();
+            }
+
+            toggleQuestion(id) {
+                if (this.expandedQuestions.has(id)) {
+                    this.expandedQuestions.delete(id);
+                } else {
+                    this.expandedQuestions.add(id);
+                }
+                this.renderContentList();
+            }
+
+            copyCode(code, btnElement) {
+                const textarea = document.createElement('textarea');
+                textarea.value = code;
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    this.showToast('Code copied to clipboard!');
+                    const icon = btnElement.querySelector('i');
+                    if (icon) {
+                        icon.className = 'fa-solid fa-check text-emerald-400';
+                        setTimeout(() => icon.className = 'fa-regular fa-copy', 2000);
+                    }
+                } catch (err) {
+                    this.showToast('Failed to copy');
+                }
+                document.body.removeChild(textarea);
+            }
+
+            showToast(msg) {
+                const toast = document.getElementById('toast');
+                const msgSpan = document.getElementById('toast-msg');
+                msgSpan.textContent = msg;
+                toast.classList.remove('opacity-0');
+                setTimeout(() => {
+                    toast.classList.add('opacity-0');
+                }, 2200);
+            }
+
+            openModal(modalId) {
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.classList.remove('opacity-0', 'pointer-events-none');
+                }
+            }
+
+            closeModal(modalId) {
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.classList.add('opacity-0', 'pointer-events-none');
+                }
+            }
+
+            handleAddContent(e) {
+                e.preventDefault();
+                const type = document.getElementById('newType').value;
+                const category = document.getElementById('newCategory').value;
+                const difficulty = document.getElementById('newDifficulty').value;
+                const title = document.getElementById('newTitle').value;
+                const body = document.getElementById('newBody').value;
+                const code = document.getElementById('newCode').value;
+
+                const newId = 'custom_' + Date.now();
+
+                if (type === 'question') {
+                    this.questions.unshift({
+                        id: newId,
+                        category,
+                        difficulty,
+                        question: title,
+                        answer: body,
+                        codeSnippet: code || '',
+                        keyTakeaways: ['Custom User Created Question']
+                    });
+                    this.showToast('Custom Question added!');
+                    this.switchTab('questions');
+                } else {
+                    this.notes.unshift({
+                        id: newId,
+                        category,
+                        title,
+                        summary: body,
+                        codeSnippet: code || ''
+                    });
+                    this.showToast('Custom Study Note added!');
+                    this.switchTab('notes');
+                }
+
+                this.saveState();
+                this.closeModal('addContentModal');
+                document.getElementById('addContentForm').reset();
+            }
+
+            resetData() {
+                localStorage.clear();
+                this.questions = [...DEFAULT_QUESTIONS];
+                this.notes = [...DEFAULT_NOTES];
+                this.bookmarks = [];
+                this.mastered = [];
+                this.expandedQuestions.clear();
+                this.selectedCategory = 'All';
+                this.selectedDifficulty = 'All';
+                this.searchQuery = '';
+                this.showToast('All app data reset to default!');
+                this.render();
+            }
+
+            render() {
+                // Update Nav Buttons State
+                ['questions', 'notes', 'quiz', 'bookmarks'].forEach(t => {
+                    const btn = document.getElementById(`nav-btn-${t}`);
+                    if (btn) {
+                        if (t === this.currentTab) {
+                            btn.className = 'flex flex-col items-center py-1 px-3 rounded-xl transition text-dbx-orange font-bold';
+                        } else {
+                            btn.className = 'flex flex-col items-center py-1 px-3 rounded-xl transition text-dbx-muted hover:text-white';
+                        }
+                    }
+                });
+
+                // Update bookmark badge count
+                const badge = document.getElementById('bookmark-badge');
+                if (badge) {
+                    if (this.bookmarks.length > 0) {
+                        badge.classList.remove('hidden');
+                    } else {
+                        badge.classList.add('hidden');
+                    }
+                }
+
+                const mainContent = document.getElementById('main-content');
+                if (!mainContent) return;
+
+                if (this.currentTab === 'questions') {
+                    mainContent.innerHTML = this.renderQuestionsView();
+                } else if (this.currentTab === 'notes') {
+                    mainContent.innerHTML = this.renderNotesView();
+                } else if (this.currentTab === 'quiz') {
+                    mainContent.innerHTML = this.renderQuizView();
+                } else if (this.currentTab === 'bookmarks') {
+                    mainContent.innerHTML = this.renderBookmarksView();
+                }
+            }
+
+            renderQuestionsView() {
+                const totalMastered = this.mastered.length;
+                const totalQuestions = this.questions.length;
+                const progressPct = totalQuestions > 0 ? Math.round((totalMastered / totalQuestions) * 100) : 0;
+
+                return `
+                    <div class="space-y-4 animate-fadeIn">
+                        <!-- Progress & Summary Header -->
+                        <div class="bg-dbx-card border border-dbx-border rounded-2xl p-4 shadow-sm">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-xs font-bold text-white">Interview Readiness</span>
+                                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-dbx-orangeLight text-dbx-orange">${progressPct}% Mastered</span>
+                                </div>
+                                <span class="text-xs text-dbx-muted font-medium">${totalMastered} / ${totalQuestions} Completed</span>
+                            </div>
+                            <div class="w-full bg-dbx-bg rounded-full h-2 overflow-hidden border border-dbx-border">
+                                <div class="bg-gradient-to-r from-dbx-orange to-amber-500 h-2 rounded-full transition-all duration-500" style="width: ${progressPct}%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Search & Filters -->
+                        <div class="space-y-2">
+                            <div class="relative">
+                                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 transform -translate-y-1/2 text-dbx-muted text-xs"></i>
+                                <input type="text" value="${this.searchQuery}" oninput="app.handleSearch(event)" placeholder="Search Q&A keywords, Spark SQL, Delta..." class="w-full bg-dbx-card border border-dbx-border rounded-xl pl-9 pr-4 py-2.5 text-xs text-white placeholder-dbx-muted focus:outline-none focus:border-dbx-orange transition">
+                            </div>
+
+                            <!-- Category Filter Scroll -->
+                            <div class="flex space-x-1.5 overflow-x-auto pb-1 no-scrollbar">
+                                ${this.categories.map(cat => `
+                                    <button onclick="app.setCategory('${cat}')" class="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium transition ${this.selectedCategory === cat ? 'bg-dbx-orange text-white shadow-md shadow-dbx-orange/20 font-semibold' : 'bg-dbx-card text-dbx-muted border border-dbx-border hover:text-white'}">
+                                        ${cat}
+                                    </button>
+                                `).join('')}
+                            </div>
+
+                            <!-- Difficulty Filter Pills -->
+                            <div class="flex items-center space-x-2 pt-0.5">
+                                <span class="text-[10px] font-semibold text-dbx-muted uppercase tracking-wider">Difficulty:</span>
+                                <div class="flex space-x-1">
+                                    ${['All', 'Easy', 'Medium', 'Hard'].map(d => `
+                                        <button onclick="app.setDifficulty('${d}')" class="px-2.5 py-1 rounded-lg text-[10px] font-medium transition ${this.selectedDifficulty === d ? 'bg-slate-700 text-white font-bold border border-slate-500' : 'bg-dbx-card text-dbx-muted border border-dbx-border hover:text-white'}">
+                                            ${d}
+                                        </button>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Questions Container -->
+                        <div id="content-list" class="space-y-3 pt-1">
+                            ${this.getFilteredQuestionsHtml()}
+                        </div>
+                    </div>
+                `;
+            }
+
+            getFilteredQuestionsHtml() {
+                let filtered = this.questions;
+                if (this.selectedCategory !== 'All') {
+                    filtered = filtered.filter(q => q.category === this.selectedCategory);
+                }
+                if (this.selectedDifficulty !== 'All') {
+                    filtered = filtered.filter(q => q.difficulty === this.selectedDifficulty);
+                }
+                if (this.searchQuery) {
+                    filtered = filtered.filter(q => 
+                        q.question.toLowerCase().includes(this.searchQuery) ||
+                        q.answer.toLowerCase().includes(this.searchQuery) ||
+                        q.category.toLowerCase().includes(this.searchQuery)
+                    );
+                }
+
+                if (filtered.length === 0) {
+                    return `
+                        <div class="text-center py-12 bg-dbx-card/50 border border-dbx-border rounded-2xl">
+                            <i class="fa-solid fa-filter-circle-xmark text-dbx-muted text-2xl mb-2"></i>
+                            <p class="text-xs text-dbx-muted">No interview questions match your current filters.</p>
+                        </div>
+                    `;
+                }
+
+                return filtered.map(q => this.renderQuestionCard(q)).join('');
+            }
+
+            renderQuestionCard(q) {
+                const isExpanded = this.expandedQuestions.has(q.id);
+                const isBookmarked = this.bookmarks.includes(q.id);
+                const isMastered = this.mastered.includes(q.id);
+
+                const diffColor = q.difficulty === 'Easy' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
+                                  q.difficulty === 'Medium' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 
+                                  'bg-dbx-orangeLight text-dbx-orange border-dbx-orange/20';
+
+                return `
+                    <div class="bg-dbx-card border ${isMastered ? 'border-emerald-500/40 bg-emerald-950/10' : 'border-dbx-border'} rounded-2xl p-4 transition shadow-sm relative overflow-hidden">
+                        ${isMastered ? `<div class="absolute top-0 right-0 w-12 h-12 bg-emerald-500/10 rounded-bl-full pointer-events-none flex items-top justify-end pr-2 pt-1.5"><i class="fa-solid fa-check text-emerald-400 text-xs"></i></div>` : ''}
+
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <div class="flex items-center space-x-1.5">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-dbx-bg text-dbx-muted border border-dbx-border">${q.category}</span>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-semibold border ${diffColor}">${q.difficulty}</span>
+                            </div>
+                            <div class="flex items-center space-x-1">
+                                <button onclick="app.toggleMastered('${q.id}')" class="p-1.5 text-xs rounded-lg ${isMastered ? 'text-emerald-400' : 'text-dbx-muted hover:text-emerald-400'} transition" title="Mark as Mastered">
+                                    <i class="fa-solid fa-circle-check"></i>
+                                </button>
+                                <button onclick="app.toggleBookmark('${q.id}')" class="p-1.5 text-xs text-dbx-muted hover:text-dbx-orange transition" title="Save Bookmark">
+                                    <i class="${isBookmarked ? 'fa-solid text-dbx-orange' : 'fa-regular'} fa-bookmark"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <h3 onclick="app.toggleQuestion('${q.id}')" class="text-xs font-bold text-white cursor-pointer hover:text-dbx-orange transition leading-snug mb-1">
+                            ${q.question}
+                        </h3>
+
+                        ${isExpanded ? `
+                            <div class="mt-3 pt-3 border-t border-dbx-border space-y-3 animate-fadeIn">
+                                <div>
+                                    <span class="text-[10px] font-bold text-dbx-muted uppercase tracking-wider block mb-1">Answer & Architecture:</span>
+                                    <p class="text-xs text-slate-300 leading-relaxed">${q.answer}</p>
+                                </div>
+
+                                ${q.keyTakeaways && q.keyTakeaways.length > 0 ? `
+                                    <div class="bg-dbx-bg/60 p-2.5 rounded-xl border border-dbx-border/80">
+                                        <span class="text-[10px] font-bold text-amber-400 block mb-1">Key Takeaways:</span>
+                                        <ul class="list-disc list-inside text-[11px] text-slate-300 space-y-0.5">
+                                            ${q.keyTakeaways.map(t => `<li>${t}</li>`).join('')}
+                                        </ul>
+                                    </div>
+                                ` : ''}
+
+                                ${q.codeSnippet ? `
+                                    <div class="bg-dbx-bg rounded-xl p-3 border border-dbx-border relative group">
+                                        <div class="flex items-center justify-between mb-1">
+                                            <span class="text-[10px] text-dbx-muted font-mono">PySpark / SQL Snippet</span>
+                                            <button onclick="app.copyCode(\`${q.codeSnippet.replace(/`/g, '\\`')}\`, this)" class="text-dbx-muted hover:text-white text-[10px] px-2 py-0.5 rounded bg-dbx-card border border-dbx-border transition flex items-center space-x-1">
+                                                <i class="fa-regular fa-copy"></i>
+                                                <span>Copy</span>
+                                            </button>
+                                        </div>
+                                        <pre class="text-[11px] font-mono text-amber-300 overflow-x-auto whitespace-pre-wrap">${q.codeSnippet}</pre>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        ` : ''}
+
+                        <div class="flex items-center justify-between pt-2 mt-2 border-t border-dbx-border/50 text-[11px]">
+                            <button onclick="app.toggleQuestion('${q.id}')" class="text-dbx-orange font-medium hover:underline flex items-center space-x-1">
+                                <span>${isExpanded ? 'Hide Answer' : 'Expand Answer'}</span>
+                                <i class="fa-solid fa-chevron-${isExpanded ? 'up' : 'down'} text-[9px]"></i>
+                            </button>
+                            <span class="text-[10px] text-dbx-muted">${isMastered ? 'Status: Mastered' : 'Status: Reviewing'}</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderNotesView() {
+                return `
+                    <div class="space-y-4 animate-fadeIn">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-xs font-bold text-white uppercase tracking-wider">Cheat Sheets & Quick Reference</h2>
+                            <span class="text-xs text-dbx-muted">${this.notes.length} modules</span>
+                        </div>
+
+                        <!-- Notes List -->
+                        <div class="space-y-3">
+                            ${this.notes.map(n => this.renderNoteCard(n)).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderNoteCard(n) {
+                const isBookmarked = this.bookmarks.includes(n.id);
+                return `
+                    <div class="bg-dbx-card border border-dbx-border rounded-2xl p-4 transition shadow-sm space-y-2">
+                        <div class="flex items-start justify-between gap-2">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">${n.category}</span>
+                            <button onclick="app.toggleBookmark('${n.id}')" class="text-dbx-muted hover:text-dbx-orange transition p-1">
+                                <i class="${isBookmarked ? 'fa-solid text-dbx-orange' : 'fa-regular'} fa-bookmark text-xs"></i>
+                            </button>
+                        </div>
+
+                        <h3 class="text-xs font-bold text-white">${n.title}</h3>
+                        <p class="text-xs text-slate-300 leading-relaxed">${n.summary}</p>
+
+                        ${n.codeSnippet ? `
+                            <div class="bg-dbx-bg rounded-xl p-3 border border-dbx-border relative">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-[10px] text-dbx-muted font-mono">Syntax Example</span>
+                                    <button onclick="app.copyCode(\`${n.codeSnippet.replace(/`/g, '\\`')}\`, this)" class="text-dbx-muted hover:text-white text-[10px] px-2 py-0.5 rounded bg-dbx-card border border-dbx-border transition flex items-center space-x-1">
+                                        <i class="fa-regular fa-copy"></i>
+                                        <span>Copy</span>
+                                    </button>
+                                </div>
+                                <pre class="text-[11px] font-mono text-emerald-300 overflow-x-auto whitespace-pre-wrap">${n.codeSnippet}</pre>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }
+
+            startQuiz() {
+                // Pick 5 randomized questions
+                const shuffled = [...this.questions].sort(() => 0.5 - Math.random());
+                this.quizQuestions = shuffled.slice(0, 5);
+                this.quizIndex = 0;
+                this.quizScore = 0;
+                this.quizAnswers = [];
+                this.quizActive = true;
+                this.quizTimeLeft = 60;
+
+                clearInterval(this.quizTimer);
+                this.quizTimer = setInterval(() => {
+                    this.quizTimeLeft--;
+                    const timerElem = document.getElementById('quiz-timer');
+                    if (timerElem) timerElem.textContent = `${this.quizTimeLeft}s`;
+                    if (this.quizTimeLeft <= 0) {
+                        this.finishQuiz();
+                    }
+                }, 1000);
+
+                this.render();
+            }
+
+            answerQuiz(knowsAnswer) {
+                if (knowsAnswer) this.quizScore++;
+                this.quizAnswers.push({
+                    question: this.quizQuestions[this.quizIndex],
+                    userKnown: knowsAnswer
+                });
+
+                this.quizIndex++;
+                if (this.quizIndex >= this.quizQuestions.length) {
+                    this.finishQuiz();
+                } else {
+                    this.render();
+                }
+            }
+
+            finishQuiz() {
+                clearInterval(this.quizTimer);
+                this.quizActive = false;
+                this.render();
+            }
+
+            renderQuizView() {
+                if (!this.quizActive && this.quizAnswers.length === 0) {
+                    return `
+                        <div class="text-center py-12 px-4 bg-dbx-card border border-dbx-border rounded-2xl space-y-4 animate-fadeIn">
+                            <div class="w-12 h-12 rounded-2xl bg-dbx-orangeLight text-dbx-orange flex items-center justify-center mx-auto text-xl">
+                                <i class="fa-solid fa-stopwatch"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-base font-bold text-white mb-1">Databricks Mock Test</h2>
+                                <p class="text-xs text-dbx-muted max-w-xs mx-auto">Test your knowledge with 5 randomized interview questions under time pressure.</p>
+                            </div>
+                            <button onclick="app.startQuiz()" class="bg-dbx-orange hover:bg-dbx-orangeHover text-white font-bold text-xs px-6 py-3 rounded-xl transition shadow-lg shadow-dbx-orange/20">
+                                Start Timed Quiz
+                            </button>
+                        </div>
+                    `;
+                }
+
+                if (this.quizActive) {
+                    const currentQ = this.quizQuestions[this.quizIndex];
+                    return `
+                        <div class="space-y-4 animate-fadeIn">
+                            <!-- Timer & Progress Bar -->
+                            <div class="flex items-center justify-between bg-dbx-card border border-dbx-border p-3 rounded-xl">
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-xs font-bold text-white">Question ${this.quizIndex + 1} of 5</span>
+                                    <span class="text-[10px] bg-dbx-bg border border-dbx-border px-2 py-0.5 rounded text-dbx-muted">${currentQ.category}</span>
+                                </div>
+                                <div class="flex items-center space-x-1.5 text-xs font-mono font-bold text-dbx-orange">
+                                    <i class="fa-solid fa-clock"></i>
+                                    <span id="quiz-timer">${this.quizTimeLeft}s</span>
+                                </div>
+                            </div>
+
+                            <!-- Question Card -->
+                            <div class="bg-dbx-card border border-dbx-border rounded-2xl p-5 space-y-4 shadow-lg">
+                                <h3 class="text-sm font-bold text-white leading-relaxed">${currentQ.question}</h3>
+                                
+                                <div class="bg-dbx-bg p-3.5 rounded-xl border border-dbx-border">
+                                    <span class="text-[10px] font-bold text-dbx-muted uppercase block mb-1">Expected Concept:</span>
+                                    <p class="text-xs text-slate-300 leading-relaxed">${currentQ.answer}</p>
+                                </div>
+
+                                <p class="text-[11px] text-center text-dbx-muted">Were you able to answer this question accurately?</p>
+
+                                <div class="grid grid-cols-2 gap-3 pt-2">
+                                    <button onclick="app.answerQuiz(false)" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 font-semibold text-xs py-2.5 rounded-xl transition">
+                                        <i class="fa-solid fa-xmark mr-1"></i> Needs Review
+                                    </button>
+                                    <button onclick="app.answerQuiz(true)" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-semibold text-xs py-2.5 rounded-xl transition">
+                                        <i class="fa-solid fa-check mr-1"></i> Answered Well
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // Quiz Results Summary
+                const scorePct = Math.round((this.quizScore / this.quizQuestions.length) * 100);
+                return `
+                    <div class="space-y-4 animate-fadeIn">
+                        <div class="bg-dbx-card border border-dbx-border rounded-2xl p-5 text-center space-y-3">
+                            <span class="text-[10px] uppercase tracking-wider text-dbx-muted font-bold">Quiz Results</span>
+                            <div class="text-3xl font-black ${scorePct >= 80 ? 'text-emerald-400' : 'text-amber-400'}">${scorePct}% Score</div>
+                            <p class="text-xs text-slate-300">You knew <strong>${this.quizScore}</strong> out of <strong>${this.quizQuestions.length}</strong> topics confidentally.</p>
+                            
+                            <button onclick="app.startQuiz()" class="bg-dbx-orange hover:bg-dbx-orangeHover text-white text-xs font-bold px-5 py-2.5 rounded-xl transition shadow-md shadow-dbx-orange/20">
+                                Retake Quiz
+                            </button>
+                        </div>
+
+                        <!-- Breakdown -->
+                        <div class="space-y-2">
+                            <h4 class="text-xs font-bold text-dbx-muted uppercase tracking-wider">Review Breakdown</h4>
+                            ${this.quizAnswers.map(a => `
+                                <div class="bg-dbx-card border border-dbx-border p-3 rounded-xl flex items-center justify-between text-xs">
+                                    <span class="text-white font-medium line-clamp-1 flex-1 pr-2">${a.question.question}</span>
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded ${a.userKnown ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}">
+                                        ${a.userKnown ? 'Mastered' : 'Review'}
+                                    </span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderBookmarksView() {
+                const savedQ = this.questions.filter(q => this.bookmarks.includes(q.id));
+                const savedN = this.notes.filter(n => this.bookmarks.includes(n.id));
+                const totalSaved = savedQ.length + savedN.length;
+
+                return `
+                    <div class="space-y-4 animate-fadeIn">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-xs font-bold text-white uppercase tracking-wider">Saved Bookmarks</h2>
+                            <span class="text-xs text-dbx-muted">${totalSaved} items</span>
+                        </div>
+
+                        ${totalSaved === 0 ? `
+                            <div class="text-center py-12 px-4 bg-dbx-card border border-dbx-border rounded-2xl">
+                                <i class="fa-solid fa-bookmark text-dbx-muted text-2xl mb-2"></i>
+                                <h3 class="text-xs font-bold text-white mb-1">No saved items</h3>
+                                <p class="text-xs text-dbx-muted max-w-xs mx-auto mb-3">Tap the bookmark icon on any question or note to save for quick offline study.</p>
+                                <button onclick="app.switchTab('questions')" class="bg-dbx-orange text-white text-xs font-semibold px-4 py-2 rounded-xl">
+                                    Browse Questions
+                                </button>
+                            </div>
+                        ` : `
+                            <div class="space-y-3">
+                                ${savedQ.map(q => this.renderQuestionCard(q)).join('')}
+                                ${savedN.map(n => this.renderNoteCard(n)).join('')}
+                            </div>
+                        `}
+                    </div>
+                `;
+            }
+        }
+
+        // Initialize App
+        const app = new DatabricksPrepApp();
+    </script>
+</body>
+</html>
